@@ -11,6 +11,7 @@
   (function(){ try{ var d = document.documentElement;
     if(localStorage.getItem('alckh_theme') === 'dark') d.classList.add('dark');
     if(localStorage.getItem('alckh_sb_hidden') === '1') d.classList.add('sb-hidden');
+    var c = localStorage.getItem('alckh_accent'); if(c && /^#[0-9a-f]{6}$/i.test(c)) d.style.setProperty('--brand', c);
   }catch(e){} })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -605,18 +606,25 @@
      Nothing here changes how the report works.
      ===================================================================== */
   :root{
-    --brand:#7c5cfa; --brand-dark:#6148c3; --brand-soft:#ece7fe; --brand-text:#6148c3;
+    /* One brand colour drives everything; the colour picker changes --brand on <html>. */
+    --brand:#7c5cfa;
+    --brand-dark:color-mix(in oklab, var(--brand) 78%, black);
+    --brand-soft:color-mix(in oklab, var(--brand) 13%, white);
+    --brand-text:color-mix(in oklab, var(--brand) 78%, black);
+    --ring:color-mix(in oklab, var(--brand) 55%, transparent);
+    --ring-soft:color-mix(in oklab, var(--brand) 40%, transparent);
+    --glow-sm:0 4px 10px -3px color-mix(in oklab, var(--brand) 70%, transparent);
     --ink2:#2b2a4c; --text:#3b3a5c; --muted:#7a7d99; --muted-2:#a2a5bd;
-    --bg:#f0f0f9; --neu-bg:#eceef6; --neu-hi:#fffffff2; --neu-lo:#a6acc88c;
+    --bg:color-mix(in oklab, var(--brand) 4%, #f5f6f9); --neu-bg:#eceef6; --neu-hi:#fffffff2; --neu-lo:#a6acc88c;
     --raise:9px 9px 18px var(--neu-lo), -9px -9px 18px var(--neu-hi);
     --raise-sm:4px 4px 9px var(--neu-lo), -4px -4px 9px var(--neu-hi);
     --raise-hover:6px 6px 12px var(--neu-lo), -6px -6px 12px var(--neu-hi);
     --press:inset 4px 4px 9px var(--neu-lo), inset -4px -4px 9px var(--neu-hi);
     --press-sm:inset 2px 2px 5px var(--neu-lo), inset -2px -2px 5px var(--neu-hi);
-    --neon:linear-gradient(135deg,#a365f0,#7c5cfa 55%,#6872fc);
-    --accent-glow:0 8px 22px -6px #7c5cfab3;
-    --sb-card:linear-gradient(180deg,#f1edfe 0%,#ffffff 38%);
-    --sb-shadow:0 18px 40px -24px #7c5cfa8c;
+    --neon:linear-gradient(135deg, color-mix(in oklab, var(--brand) 70%, #ff7ad9), var(--brand) 55%, color-mix(in oklab, var(--brand) 55%, #4f8cff));
+    --accent-glow:0 8px 22px -6px color-mix(in oklab, var(--brand) 70%, transparent);
+    --sb-card:linear-gradient(180deg, color-mix(in oklab, var(--brand) 11%, white) 0%, #ffffff 38%);
+    --sb-shadow:0 18px 40px -24px color-mix(in oklab, var(--brand) 55%, transparent);
     --ok:#10b981; --ok-soft:#d1fae5; --warn:#f59e0b; --warn-soft:#fef3c7; --bad:#ef4444; --bad-soft:#fee2e2;
     --info:#3b82f6; --info-soft:#e0ecfd;
     --sb-w:252px;
@@ -628,12 +636,12 @@
     --line:#dfe1ee; --brass:var(--brand); --brass-deep:var(--brand-dark);
     --pine:var(--brand); --pine-soft:var(--brand-soft);
     --amber:var(--warn); --amber-soft:var(--warn-soft); --rust:var(--bad); --rust-soft:var(--bad-soft);
-    --yellow:#7c5cfa; --yellow-deep:#6148c3;
+    --yellow:var(--brand); --yellow-deep:var(--brand-dark);
     --mono:var(--mono-font); --serif:var(--font); --sans:var(--font);
     color-scheme:light;
   }
   html.dark{
-    --brand-soft:#2a2550; --brand-text:#b4a3ff;
+    --brand-soft:color-mix(in oklab, var(--brand) 26%, #1f2230); --brand-text:color-mix(in oklab, var(--brand) 55%, white);
     --ink2:#eef0fb; --text:#cfd2e6; --muted:#8c90ad; --muted-2:#626683;
     --bg:#181a24; --neu-bg:#1f2230; --neu-hi:#ffffff0d; --neu-lo:#0000008c;
     --sb-card:#141518; --sb-shadow:0 24px 60px -24px #000000bf;
@@ -644,8 +652,8 @@
   }
   body{font-family:var(--font); font-size:14.5px; color:var(--text); background:var(--bg) !important; background-image:none !important;}
   body::before{display:none;}
-  ::selection{background:#e2dbfe;}
-  html.dark ::selection{background:#382971;}
+  ::selection{background:color-mix(in oklab, var(--brand) 22%, white);}
+  html.dark ::selection{background:color-mix(in oklab, var(--brand) 45%, black);}
   button, input, select, textarea{font-family:var(--font);}
   svg.ic{width:17px;height:17px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
 
@@ -656,7 +664,7 @@
     border-radius:28px; background:var(--sb-card); box-shadow:var(--sb-shadow); color:var(--text);}
   .sb-glow{display:none;}
   html.dark .sb-glow{display:block; position:absolute; inset:0; pointer-events:none;
-    background:radial-gradient(22rem 16rem at 50% 108%,#7c5cfa42,#0000 70%),radial-gradient(16rem 10rem at 0 0,#7c5cfa17,#0000 70%);}
+    background:radial-gradient(22rem 16rem at 50% 108%,color-mix(in oklab, var(--brand) 26%, transparent),#0000 70%),radial-gradient(16rem 10rem at 0 0,color-mix(in oklab, var(--brand) 9%, transparent),#0000 70%);}
   .sb-soft{background:var(--neu-bg); box-shadow:var(--raise-sm);}
   .sb-well{background:var(--neu-bg); box-shadow:var(--press-sm);}
   .sb-head{position:relative; height:68px; flex-shrink:0; display:flex; align-items:center; gap:10px; padding:0 16px;}
@@ -766,8 +774,8 @@
   .toolbar input[type=search], select.statusfilter{font-family:var(--font); font-size:13.5px; color:var(--ink2); background:var(--neu-bg); border:none; border-radius:14px; box-shadow:var(--press-sm); padding:8px 12px;}
   .toolbar input[type=search]{width:200px; min-width:160px;}
   .toolbar select.statusfilter{max-width:170px;}
-  .toolbar input[type=search]:focus, select.statusfilter:focus, select.monthselect:focus{outline:none; box-shadow:var(--press-sm), 0 0 0 2px #7c5cfa8c;}
-  .toolbar select.signofffilter.on{background:var(--neu-bg); color:var(--brand-text); font-weight:600; box-shadow:var(--press-sm), 0 0 0 2px #7c5cfa66; border:none;}
+  .toolbar input[type=search]:focus, select.statusfilter:focus, select.monthselect:focus{outline:none; box-shadow:var(--press-sm), 0 0 0 2px var(--ring);}
+  .toolbar select.signofffilter.on{background:var(--neu-bg); color:var(--brand-text); font-weight:600; box-shadow:var(--press-sm), 0 0 0 2px var(--ring-soft); border:none;}
   .toolbar .btn{padding:8px 14px;}
 
   .readonly-banner{font-family:var(--font); font-size:13.5px; font-weight:500; background:var(--neu-bg); box-shadow:var(--press-sm); color:var(--warn); border-radius:16px;}
@@ -801,26 +809,26 @@
   .sortBtn:hover{color:var(--brand); box-shadow:var(--press-sm); border:none;}
   tbody td{border-bottom:1px solid color-mix(in srgb, var(--line) 65%, transparent); font-size:13px;}
   tbody tr:hover{background:color-mix(in srgb, var(--brand) 5%, transparent);}
-  tbody tr:focus-within{background:color-mix(in srgb, var(--brand) 8%, transparent); box-shadow:inset 0 0 0 2px #7c5cfa80;}
+  tbody tr:focus-within{background:color-mix(in srgb, var(--brand) 8%, transparent); box-shadow:inset 0 0 0 2px var(--ring);}
   tbody tr:hover td.name::before{border-left-color:var(--brand);}
   tbody td.name input{font-family:var(--font); font-size:13px; color:var(--ink2); border-radius:8px; padding:3px 6px;}
   tbody td.name input:focus{border-bottom:none; background:var(--neu-bg); box-shadow:var(--press-sm);}
 
   /* Cell dropdowns and inputs: soft wells; done = violet, pending/NA = amber, late = red */
   .statusSel, .xSel, .textSel, .dateSelect{font-family:var(--font); border:none; border-radius:8px; background:var(--neu-bg); box-shadow:var(--press-sm); color:var(--ink2); padding:3px 2px; font-size:9.5px;}
-  .statusSel.done, .dateSelect.ontime{background:var(--brand); background-image:var(--neon); color:#fff; box-shadow:0 4px 10px -3px #7c5cfab3; border:none; font-weight:600;}
+  .statusSel.done, .dateSelect.ontime{background:var(--brand); background-image:var(--neon); color:#fff; box-shadow:var(--glow-sm); border:none; font-weight:600;}
   .statusSel.na{background:color-mix(in srgb, var(--warn) 22%, var(--neu-bg)); color:var(--warn); border:none; box-shadow:var(--raise-sm); font-weight:600;}
   html.dark .statusSel.na{color:#fcd34d;}
   .xSel.filled{background:var(--brand-soft); color:var(--brand-text); border:none; font-weight:600;}
   .textSel{cursor:text;}
   .textSel.set{background:color-mix(in srgb, var(--ok) 16%, var(--neu-bg)); color:var(--ok); border:none; font-weight:600;}
-  .textSel:focus{background:var(--neu-bg); box-shadow:var(--press-sm), 0 0 0 2px #7c5cfa8c; color:var(--ink2); border:none;}
+  .textSel:focus{background:var(--neu-bg); box-shadow:var(--press-sm), 0 0 0 2px var(--ring); color:var(--ink2); border:none;}
   .dateSelect.late{background:var(--bad); color:#fff; border:none; box-shadow:0 4px 10px -3px color-mix(in srgb, var(--bad) 70%, transparent);}
   .dateSelect.ontime::-webkit-calendar-picker-indicator{filter:invert(1);}
   html.dark .dateSelect:not(.ontime):not(.late)::-webkit-calendar-picker-indicator{filter:invert(.8);}
   .statusSel option, .xSel option{background:var(--neu-bg); color:var(--ink2);}
   .chk{border:none; border-radius:8px; background:var(--neu-bg); box-shadow:var(--press-sm);}
-  .chk.done{background-image:var(--neon); color:#fff; border:none; box-shadow:0 4px 10px -3px #7c5cfab3;}
+  .chk.done{background-image:var(--neon); color:#fff; border:none; box-shadow:var(--glow-sm);}
 
   .bar{height:10px; background:var(--neu-bg); box-shadow:var(--press-sm);}
   .bar > span{background-image:var(--neon);}
@@ -903,7 +911,7 @@
   }
 
   @media print{
-    :root, html.dark{--neu-bg:#fff; --bg:#fff; --ink2:#1f2937; --text:#1f2937; --muted:#64748b; --line:#e2e8f0; --brand-soft:#ece7fe; --brand-text:#6148c3; --raise:none; --raise-sm:none; --press-sm:none; --press:none;}
+    :root, html.dark{--neu-bg:#fff; --bg:#fff; --ink2:#1f2937; --text:#1f2937; --muted:#64748b; --line:#e2e8f0; --brand-soft:color-mix(in oklab, var(--brand) 13%, white); --brand-text:color-mix(in oklab, var(--brand) 78%, black); --raise:none; --raise-sm:none; --press-sm:none; --press:none;}
     body{height:auto !important; overflow:visible !important;}
     .sb, .sb-backdrop, .topbar{display:none !important;}
     .app{margin:0 !important; height:auto !important; display:block !important;}
@@ -976,7 +984,27 @@
   .cf-opt.good b{color:var(--ok);}
   .cf-opt.warn b{color:var(--warn);}
   .cf-sep{height:1px; background:var(--line); margin:4px 6px;}
-  @media print{ .cf-btn, .cf-menu{display:none !important;} thead tr.cols th.cf-th{padding-bottom:6px;} }</style>
+  @media print{ .cf-btn, .cf-menu{display:none !important;} thead tr.cols th.cf-th{padding-bottom:6px;} }
+  /* Theme colour picker */
+  .sb-row{display:flex; gap:10px; align-items:center;}
+  .sb-row .sb-neon{flex:1; width:auto;}
+  .cp-btn{width:42px; height:42px; flex-shrink:0; display:grid; place-items:center; border:none; border-radius:50%; cursor:pointer; transition:box-shadow .15s;}
+  .topbar .cp-btn{width:38px; height:38px;}
+  .cp-btn:hover{box-shadow:var(--press-sm);}
+  .cp-dot{width:16px; height:16px; border-radius:50%; background:var(--brand); box-shadow:0 0 0 2px var(--neu-bg), 0 0 0 3px rgb(0 0 0 / .15);}
+  .cp-pop{position:fixed; z-index:10002; width:220px; padding:12px; border-radius:24px; background:var(--neu-bg);
+    box-shadow:14px 14px 32px var(--neu-lo), -10px -10px 28px var(--neu-hi); font-family:var(--font);}
+  .cp-pop[hidden]{display:none;}
+  .cp-title{margin-bottom:8px; font-size:12px; font-weight:600; color:var(--muted);}
+  .cp-grid{display:grid; grid-template-columns:repeat(6, 1fr); gap:7px;}
+  .cp-sw, .cp-any{width:24px; height:24px; border:none; border-radius:50%; padding:0; cursor:pointer; transition:transform .12s;}
+  .cp-sw:hover, .cp-any:hover{transform:scale(1.12);}
+  .cp-sw.on{box-shadow:0 0 0 2px var(--neu-bg), 0 0 0 4px var(--sw);}
+  .cp-any{position:relative; overflow:hidden; display:block; background:conic-gradient(red, yellow, lime, cyan, blue, magenta, red);}
+  .cp-any input{position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0;}
+  .cp-note{margin:9px 0 0; font-size:12px; line-height:1.4; color:var(--muted-2);}
+  @media print{ .cp-btn, .cp-pop{display:none !important;} }
+</style>
 </head>
 <body class="locked">
 <div id="loginGate">
@@ -1004,7 +1032,10 @@
     </label>
     <nav class="sb-nav" id="sbNav"></nav>
     <div class="sb-foot">
-      <button type="button" class="sb-neon" id="sbNewMonth"><span style="font-size:19px;line-height:1">+</span> New month</button>
+      <div class="sb-row">
+        <button type="button" class="cp-btn sb-soft" data-cp title="Theme colour" aria-label="Theme colour" aria-haspopup="true"><span class="cp-dot"></span></button>
+        <button type="button" class="sb-neon" id="sbNewMonth"><span style="font-size:19px;line-height:1">+</span> New month</button>
+      </div>
       <div class="sb-meter sb-well">
         <div class="row"><span id="sbMonthName">Overall</span><b id="sbOverallPct">0%</b></div>
         <div class="track"><span id="sbOverallBar" style="width:0%"></span></div>
@@ -1022,6 +1053,7 @@
   <div class="grow"></div>
   <span class="sync-chip" id="topSync" title="Team sync status">Connecting…</span>
   <span class="hint"><span class="kbd">[</span> toggle sidebar</span>
+  <button type="button" class="icon-btn cp-btn" data-cp title="Theme colour" aria-label="Theme colour" aria-haspopup="true"><span class="cp-dot"></span></button>
   <button type="button" class="icon-btn" id="themeToggle" title="Light / dark" aria-label="Switch light or dark">
     <svg class="ic" viewBox="0 0 24 24" id="themeIcon"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
   </button>
@@ -3346,7 +3378,7 @@ document.getElementById('logoutBtn').addEventListener('click', ()=>{
 
   // Ring gradient for the overall-progress circle.
   const ring = document.querySelector('.ringwrap svg');
-  if(ring) ring.insertAdjacentHTML('afterbegin', '<defs><linearGradient id="ringNeon" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a365f0"/><stop offset=".55" stop-color="#7c5cfa"/><stop offset="1" stop-color="#6872fc"/></linearGradient></defs>');
+  if(ring) ring.insertAdjacentHTML('afterbegin', '<defs><linearGradient id="ringNeon" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:color-mix(in oklab, var(--brand) 70%, #ff7ad9)"/><stop offset=".55" style="stop-color:var(--brand)"/><stop offset="1" style="stop-color:color-mix(in oklab, var(--brand) 55%, #4f8cff)"/></linearGradient></defs>');
 
   // Dark mode
   const MOON = '<path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/>';
@@ -3436,7 +3468,7 @@ document.getElementById('logoutBtn').addEventListener('click', ()=>{
 
     h += '<div class="sb-group">Clients</div>';
     [['all','All statuses','#7c5cfa'],['complete','Complete','#10b981'],['progress','In progress','#f59e0b'],['zero','Not started','#ef4444'],
-     ['active','Active clients','#6872fc'],['new','New this month','#10b981'],['stopped','Stopped engaged','#ef4444'],['lead','Leads','#3b82f6']].forEach(function(s){
+     ['active','Active clients','var(--brand)'],['new','New this month','#10b981'],['stopped','Stopped engaged','#ef4444'],['lead','Leads','#3b82f6']].forEach(function(s){
       if(s[0] === 'all') return;
       h += item(status === s[0], dot(s[2]), s[1], c[s[0]], function(){ setSelect('statusFilter', status === s[0] ? 'all' : s[0]); });
     });
@@ -3666,6 +3698,76 @@ document.getElementById('logoutBtn').addEventListener('click', ()=>{
   const _render = render;
   render = function(){ _render.apply(this, arguments); paint(); };
   paint();
+})();
+</script>
+<script>
+// ---- Theme colour (same choices as the ALCKH Accounting & Tax app) ----
+// Buttons, ticks, the menu and highlights follow this colour. Saved in this browser only.
+(function(){
+  const KEY = 'alckh_accent';
+  const SWATCHES = [
+    {name:'Violet', hex:'#7c5cfa'}, {name:'Indigo', hex:'#4f46e5'}, {name:'ALCKH blue', hex:'#0b5c9e'},
+    {name:'Sky', hex:'#0284c7'}, {name:'Teal', hex:'#0d9488'}, {name:'Emerald', hex:'#059669'},
+    {name:'Amber', hex:'#d97706'}, {name:'Orange', hex:'#ea580c'}, {name:'Rose', hex:'#e11d48'},
+    {name:'Pink', hex:'#db2777'}, {name:'Graphite', hex:'#475569'}
+  ];
+  const DEFAULT = SWATCHES[0].hex;
+  const root = document.documentElement;
+  function current(){
+    try{ const c = localStorage.getItem(KEY); return c && /^#[0-9a-f]{6}$/i.test(c) ? c.toLowerCase() : DEFAULT; }catch(e){ return DEFAULT; }
+  }
+  function apply(hex){
+    root.style.setProperty('--brand', hex);
+    document.querySelectorAll('.cp-dot').forEach(function(d){ d.style.background = hex; });
+    pop.querySelectorAll('.cp-sw').forEach(function(b){ b.classList.toggle('on', b.dataset.hex === hex); b.setAttribute('aria-pressed', String(b.dataset.hex === hex)); });
+    const any = pop.querySelector('input[type=color]'); if(any) any.value = hex;
+  }
+  function choose(hex){
+    try{ localStorage.setItem(KEY, hex); }catch(e){}
+    apply(hex);
+  }
+
+  const pop = document.createElement('div');
+  pop.className = 'cp-pop';
+  pop.hidden = true;
+  pop.setAttribute('role', 'dialog');
+  pop.setAttribute('aria-label', 'Theme colour');
+  pop.innerHTML = '<div class="cp-title">Theme colour</div><div class="cp-grid">' +
+    SWATCHES.map(function(s){ return '<button type="button" class="cp-sw" data-hex="' + s.hex + '" title="' + s.name + '" aria-label="' + s.name + '" style="background:' + s.hex + ';--sw:' + s.hex + '"></button>'; }).join('') +
+    '<label class="cp-any" title="Any colour"><input type="color" aria-label="Any colour"></label></div>' +
+    '<p class="cp-note">Buttons, ticks and the menu follow this colour. Saved in this browser.</p>';
+  document.body.appendChild(pop);
+
+  pop.addEventListener('click', function(e){ const b = e.target.closest('.cp-sw'); if(b) choose(b.dataset.hex); });
+  pop.querySelector('input[type=color]').addEventListener('input', function(){ choose(this.value.toLowerCase()); });
+
+  let anchor = null;
+  function open(btn){
+    anchor = btn;
+    pop.hidden = false;
+    const r = btn.getBoundingClientRect();
+    const below = r.top < innerHeight / 2;
+    let top = below ? r.bottom + 8 : r.top - pop.offsetHeight - 8;
+    top = Math.min(Math.max(8, top), innerHeight - pop.offsetHeight - 8);
+    const left = Math.min(Math.max(8, below ? r.right - pop.offsetWidth : r.left), innerWidth - pop.offsetWidth - 8);
+    pop.style.top = top + 'px';
+    pop.style.left = left + 'px';
+    document.querySelectorAll('[data-cp]').forEach(function(b){ b.setAttribute('aria-expanded', String(b === btn)); });
+  }
+  function close(){
+    pop.hidden = true; anchor = null;
+    document.querySelectorAll('[data-cp]').forEach(function(b){ b.setAttribute('aria-expanded', 'false'); });
+  }
+  document.querySelectorAll('[data-cp]').forEach(function(btn){
+    btn.addEventListener('click', function(e){ e.stopPropagation(); if(anchor === btn) close(); else open(btn); });
+  });
+  document.addEventListener('mousedown', function(e){ if(!pop.hidden && !pop.contains(e.target) && !e.target.closest('[data-cp]')) close(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
+  window.addEventListener('resize', close);
+  // Another tab changed the colour: follow it.
+  window.addEventListener('storage', function(e){ if(e.key === KEY) apply(current()); });
+
+  apply(current());
 })();
 </script>
 </body>
