@@ -949,7 +949,34 @@
   .toolbar .btn{display:inline-flex; align-items:center; gap:6px; white-space:nowrap;}
   @media (max-width:900px){ .toolbar{flex-wrap:wrap;} }
   @media (max-width:640px){ .ddpanel{grid-template-columns:1fr; position:fixed; left:12px; right:12px; top:auto; width:auto;} }
-</style>
+
+  /* New task choices */
+  .statusSel.dh{background:color-mix(in srgb, var(--muted) 18%, var(--neu-bg)); color:var(--muted); box-shadow:var(--raise-sm); font-weight:600; border:none;}
+  .statusSel.part{background:color-mix(in srgb, var(--info) 18%, var(--neu-bg)); color:var(--info); box-shadow:var(--raise-sm); font-weight:600; border:none;}
+
+  /* Column filters */
+  thead tr.cols th.cf-th{position:relative; padding-bottom:20px;}
+  .cf-btn{position:absolute; left:50%; bottom:3px; transform:translateX(-50%); width:22px; height:15px; padding:0; border:none; border-radius:99px;
+    display:grid; place-items:center; cursor:pointer; color:var(--muted-2); background:transparent; transition:color .12s, box-shadow .12s, background .12s;}
+  .cf-btn svg{width:11px; height:11px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linejoin:round;}
+  .cf-btn:hover{color:var(--brand); box-shadow:var(--raise-sm); background:var(--neu-bg);}
+  .cf-btn.on{color:#fff; background-image:var(--neon); box-shadow:var(--accent-glow);}
+  .cf-btn.on svg{fill:currentColor;}
+  .cf-menu{position:fixed; z-index:10001; min-width:210px; max-width:280px; max-height:70vh; overflow:auto; padding:6px; border-radius:16px;
+    background:var(--neu-bg); box-shadow:var(--raise-sm), 0 22px 44px -14px rgb(20 16 60 / .35); font-family:var(--font); color:var(--ink2);}
+  .cf-menu[hidden]{display:none;}
+  .cf-head{display:flex; flex-direction:column; padding:6px 10px 8px; font-size:13.5px; font-weight:700;}
+  .cf-head span{font-size:11.5px; font-weight:500; color:var(--muted);}
+  .cf-opt{display:flex; align-items:center; gap:10px; width:100%; border:none; background:transparent; padding:7px 10px; border-radius:11px;
+    font-family:var(--font); font-size:13.5px; color:var(--ink2); cursor:pointer; text-align:left;}
+  .cf-opt span{flex:1;}
+  .cf-opt b{font-family:var(--mono-font); font-size:12px; font-weight:600; color:var(--muted); padding:1px 8px; border-radius:99px; box-shadow:var(--press-sm);}
+  .cf-opt:hover{box-shadow:var(--raise-sm);}
+  .cf-opt.on{box-shadow:var(--press-sm); font-weight:600; color:var(--brand-text);}
+  .cf-opt.good b{color:var(--ok);}
+  .cf-opt.warn b{color:var(--warn);}
+  .cf-sep{height:1px; background:var(--line); margin:4px 6px;}
+  @media print{ .cf-btn, .cf-menu{display:none !important;} thead tr.cols th.cf-th{padding-bottom:6px;} }</style>
 </head>
 <body class="locked">
 <div id="loginGate">
@@ -1791,7 +1818,7 @@ function fieldLabel(f){
 function fmtVal(f, v){
   if(v === undefined || v === null || v === '') return '—';
   const d = DROPDOWN_COLS[f];
-  if(d) return v === true ? d.yes : (v === 'na' ? 'N/A' : d.no);
+  if(d) return valLabel(f, v);
   if(typeof v === 'boolean') return v ? 'Done' : '—';
   return String(v);
 }
@@ -2128,18 +2155,55 @@ function isLocked(){ return !isLatestMonth() && !state.locked[state.current]; }
 const DROPDOWN_COLS = {
   import_: {no:'No Import', yes:'Done', pending:true},
   export: {no:'No Export', yes:'Done', pending:true},
-  gp1: {no:'Pending', yes:'Done', pending:false},
-  gp2: {no:'Pending', yes:'Done', pending:false},
-  vat0: {no:'Pending', yes:'Done', pending:false},
-  fa: {no:'Pending', yes:'Done', pending:false},
-  sales0cmt: {no:'Pending', yes:'Done', pending:false},
-  invadj: {no:'Pending', yes:'Done', pending:false},
-  salary: {no:'Pending', yes:'Done', pending:false},
-  bankrec: {no:'Pending', yes:'Done', pending:false},
+  gp1: {no:'Pending', yes:'Done', pending:false, extra:[{v:'dh', l:"Don't have", done:true}]},
+  gp2: {no:'Pending', yes:'Done', pending:false, extra:[{v:'dh', l:"Don't have", done:true}]},
+  vat0: {no:'Pending', yes:'Done', pending:false, extra:[{v:'dh', l:"Don't have", done:true}]},
+  fa: {no:'Pending', yes:'Done', pending:false, extra:[{v:'dh', l:"Don't have", done:true}]},
+  sales0cmt: {no:'Pending', yes:'Done', pending:false, extra:[{v:'dh', l:"Don't have", done:true}]},
+  invadj: {no:'Pending', yes:'Done', pending:false, extra:[{v:'dh', l:"Don't have", done:true}]},
+  salary: {no:'Pending', yes:'Done', pending:false, extra:[{v:'dh', l:"Don't have", done:true}]},
+  bankrec: {no:'Pending', yes:'Done', pending:false, extra:[{v:'dh', l:"Don't have", done:true}]},
   efiling: {no:'Pending', yes:'Done', pending:false},
   bill_sent: {no:'Not Yet Sent', yes:'Sent', pending:false},
-  tax_payment: {no:'Unpaid', yes:'Paid', pending:false}
+  tax_payment: {no:'Not Receive, Unpaid', yes:'Paid', pending:false, extra:[{v:'recv', l:'Receive, Unpaid', done:false}]}
 };
+
+// ---- Task values: one place that knows what each saved value means ----
+function ddExtra(key, v){ const dd = DROPDOWN_COLS[key]; return (dd && dd.extra && typeof v === 'string') ? (dd.extra.find(function(o){ return o.v === v; }) || null) : null; }
+// Finished: Done, "No Import/No Export" (pending-type columns), or an extra option marked done (Don't have).
+function isDoneVal(key, v){
+  const dd = DROPDOWN_COLS[key];
+  if(v === true) return true;
+  if(v === false && dd && dd.pending) return true;
+  const x = ddExtra(key, v);
+  return !!(x && x.done);
+}
+function valLabel(key, v){
+  const dd = DROPDOWN_COLS[key];
+  if(!dd) return v ? 'Done' : '';
+  if(v === 'na') return 'Pending';
+  if(v === true) return dd.yes;
+  const x = ddExtra(key, v);
+  return x ? x.l : dd.no;
+}
+function selValOf(key, v){ return v === 'na' ? 'na' : (v === true ? 'true' : (ddExtra(key, v) ? v : 'false')); }
+function parseSelVal(key, s){ if(s === 'na') return 'na'; if(s === 'true') return true; if(ddExtra(key, s)) return s; return false; }
+function selClass(key, v){
+  if(v === 'na') return 'na';
+  const x = ddExtra(key, v);
+  if(x) return x.done ? 'dh' : 'part';
+  return isDoneVal(key, v) ? 'done' : '';
+}
+// The choices shown in a task dropdown, in order.
+function ddChoices(key){
+  const dd = DROPDOWN_COLS[key];
+  const list = [{v:'false', l:dd.no}];
+  if(key === 'tax_payment'){ (dd.extra || []).forEach(function(o){ list.push({v:o.v, l:o.l}); }); list.push({v:'true', l:dd.yes}); return list; }
+  list.push({v:'true', l:dd.yes});
+  if(dd.pending) list.push({v:'na', l:'Pending'});
+  (dd.extra || []).forEach(function(o){ list.push({v:o.v, l:o.l}); });
+  return list;
+}
 
 // ---- Client in / out ----
 // row.engaged_from = month the company was registered (counts as NEW in that month)
@@ -2357,8 +2421,7 @@ function groupProgress(row, keys){
     // Pending (v === 'na') now correctly counts as "not yet done" here — it still
     // adds to the total, it just doesn't add to done. Done and No Import/No Export
     // (for the pending-type dropdowns) both count as settled/done.
-    if(v === true) done++;
-    else if(v === false && dd && dd.pending) done++;
+    if(isDoneVal(key, v)) done++;
   });
   return total > 0 ? (done / total) : 1;
 }
@@ -2368,9 +2431,7 @@ function rowProgress(row){
   TASK_COLS.forEach(function(c){
     const v = row[c.key];
     total++;
-    const dd = DROPDOWN_COLS[c.key];
-    if(v === true) done++;
-    else if(v === false && dd && dd.pending) done++;
+    if(isDoneVal(c.key, v)) done++;
   });
   return total > 0 ? (done / total) : 1;
 }
@@ -2518,10 +2579,9 @@ function render(){
         const dd = DROPDOWN_COLS[c.key];
         if(dd){
           const v = row[c.key];
-          const cls = v === 'na' ? 'na' : (v === true ? 'done' : (dd.pending ? 'done' : ''));
-          let opts = '<option value="false"' + (v !== true && v !== 'na' ? ' selected':'') + '>' + dd.no + '</option>'
-                   + '<option value="true"' + (v === true ? ' selected':'') + '>' + dd.yes + '</option>';
-          if(dd.pending) opts += '<option value="na"' + (v === 'na' ? ' selected':'') + '>Pending</option>';
+          const cls = selClass(c.key, v), cur = selValOf(c.key, v);
+          let opts = '';
+          ddChoices(c.key).forEach(function(o){ opts += '<option value="' + o.v + '"' + (o.v === cur ? ' selected' : '') + '>' + escapeAttr(o.l) + '</option>'; });
           tds += '<td><select class="statusSel ' + cls + '" data-idx="' + idx + '" data-field="' + c.key + '" ' + (locked?'disabled':'') + '>' + opts + '</select></td>';
         } else {
           tds += '<td><span class="chk ' + (row[c.key] ? 'done':'') + ' ' + (locked?'readonly':'') + '" data-idx="' + idx + '" data-field="' + c.key + '">' + (row[c.key] ? '&#10003;':'') + '</span></td>';
@@ -2604,8 +2664,8 @@ function updateStats(){
 // and the totals, then save. Falls back to a full redraw when a status filter is on,
 // because the row may need to appear or disappear.
 function paintSelect(el, v, dd){
-  el.classList.remove('done','na');
-  const cls = v === 'na' ? 'na' : (v === true ? 'done' : (dd && dd.pending ? 'done' : ''));
+  el.classList.remove('done','na','dh','part');
+  const cls = selClass(el.dataset.field, v);
   if(cls) el.classList.add(cls);
 }
 function paintRowProgress(tr, row){
@@ -2622,7 +2682,7 @@ function paintRowCells(idx, row){
     tr = tr || el.closest('tr');
     const f = el.dataset.field, v = row[f];
     if(el.classList.contains('statusSel')){
-      const want = v === 'na' ? 'na' : (v === true ? 'true' : 'false');
+      const want = selValOf(f, v);
       if(el.value !== want) el.value = want;
       paintSelect(el, v, DROPDOWN_COLS[f]);
     } else if(el.classList.contains('xSel')){
@@ -2682,7 +2742,7 @@ function attachRowEvents(){
       const idx = +el.dataset.idx;
       const field = el.dataset.field;
       const prev = currentRows()[idx][field];
-      currentRows()[idx][field] = (el.value === 'na') ? 'na' : (el.value === 'true');
+      currentRows()[idx][field] = parseSelVal(field, el.value);
       refreshRow(el, idx, prev);
     });
   });
@@ -2934,9 +2994,7 @@ function exportSchedule(rows, opts){
     TASK_COLS.forEach(function(c){
       const v = row[c.key];
       const dd = DROPDOWN_COLS[c.key];
-      if(v === 'na'){ line.push('Pending'); }
-      else if(dd){ line.push(v ? dd.yes : dd.no); }
-      else{ line.push(v ? 'Done' : ''); }
+      line.push(valLabel(c.key, v));
       if(c.key === 'export') line.push(Math.round(groupProgress(row, GROUPS.pca)*10000)/10000);
       else if(c.key === 'bankrec') line.push(Math.round(groupProgress(row, GROUPS.bk)*10000)/10000);
       else if(c.key === 'tax_payment') line.push(Math.round(groupProgress(row, GROUPS.tax)*10000)/10000);
@@ -3029,7 +3087,8 @@ document.getElementById('fileInput').addEventListener('change', function(e){
           if(dd && dd.pending && (s === 'n/a' || s === 'na' || s === 'pending')){
             row[c.key] = 'na';
           } else if(dd){
-            row[c.key] = s === dd.yes.toLowerCase();
+            const x = (dd.extra || []).find(function(o){ return o.l.toLowerCase() === s || o.v === s; });
+            row[c.key] = x ? x.v : (s === dd.yes.toLowerCase() || (c.key === 'tax_payment' && s === 'paid'));
           } else {
             row[c.key] = (s === 'done');
           }
@@ -3074,8 +3133,7 @@ let pmLastShown = [];
 function pmEsc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function pmLabel(key){ const c = COLS.find(function(x){ return x.key === key; }); return c ? c.label : key; }
 function pmItemDone(row, key){
-  const v = row[key], dd = DROPDOWN_COLS[key];
-  return v === true || (v === false && dd && dd.pending);
+  return isDoneVal(key, row[key]);
 }
 function pmRenderInOut(){
   const q = document.getElementById('pmSearch').value.trim().toLowerCase();
@@ -3121,8 +3179,7 @@ function pmRender(){
     const pct = groupProgress(row, keys);
     if(pct >= 0.999) return;
     const items = keys.filter(function(k){ return !pmItemDone(row, k); }).map(function(k){
-      const dd = DROPDOWN_COLS[k];
-      const status = row[k] === 'na' ? 'Pending' : (dd ? dd.no : 'Not done');
+      const status = DROPDOWN_COLS[k] ? valLabel(k, row[k]) : 'Not done';
       return pmLabel(k) + (status === 'Pending' ? '' : ': ' + status);
     });
     list.push({idx:idx, no:idx+1, name:row.name || '(no name)', pct:Math.round(pct*100), items:items});
@@ -3460,5 +3517,156 @@ document.getElementById('logoutBtn').addEventListener('click', ()=>{
   const _r = render; render = function(){ _r.apply(this, arguments); paint(); };
   paint();
 })();
-</script></body>
+</script><script>
+// ---- Column filters: a ▾ button in each dropdown column's header ----
+// Pick "Finished", "Remaining" or one exact choice (e.g. Salary: Don't have, Tax Payment: Receive, Unpaid).
+// Works with search, the Filters panel and Export (Export saves only the companies shown).
+(function(){
+  const $ = function(id){ return document.getElementById(id); };
+  // Column order of the table header row.
+  const HEAD_KEYS = [null, 'pkg', 'plan_finish', 'actual_finish', 'import_', 'export', 'gp1', 'gp2', 'vat0', 'fa', 'sales0cmt', 'invadj',
+                     'salary', 'bankrec', 'bank_report', 'efiling', 'bill_sent', 'tax_payment', null, null, null, null];
+  const colFilters = {};   // key -> option value
+  window.colFilters = colFilters;
+
+  function label(key){
+    if(key === 'pkg') return 'Package';
+    if(key === 'bank_report') return 'Bank report';
+    const c = COLS.find(function(x){ return x.key === key; });
+    return c ? c.label : key;
+  }
+  // The options offered for one column: [{v, l, test(row)}]
+  function options(key){
+    if(DROPDOWN_COLS[key]){
+      const list = [
+        {v:'__done', l:'Finished', test:function(r){ return isDoneVal(key, r[key]); }},
+        {v:'__left', l:'Remaining', test:function(r){ return !isDoneVal(key, r[key]); }}
+      ];
+      ddChoices(key).forEach(function(o){
+        list.push({v:o.v, l:o.l, test:function(r){ return selValOf(key, r[key]) === o.v; }});
+      });
+      return list;
+    }
+    if(key === 'pkg' || key === 'bank_report'){
+      const opts = key === 'pkg' ? PKG_OPTS : BANKRPT_OPTS;
+      return opts.map(function(o){ return {v:o.v, l:o.l, test:function(r){ return r[key] === o.v; }}; })
+        .concat([{v:'__blank', l:'(not set)', test:function(r){ return !r[key]; }}]);
+    }
+    // Plan / actual finish dates
+    const list = [
+      {v:'__has', l:'Has a date', test:function(r){ return !!r[key]; }},
+      {v:'__blank', l:'No date yet', test:function(r){ return !r[key]; }}
+    ];
+    if(key === 'actual_finish'){
+      list.push({v:'__ontime', l:'Finished on time', test:function(r){ return !!r.actual_finish && finishClass(r) === 'ontime'; }});
+      list.push({v:'__late', l:'Finished late', test:function(r){ return !!r.actual_finish && finishClass(r) === 'late'; }});
+    }
+    return list;
+  }
+  function optionOf(key){ return options(key).find(function(o){ return o.v === colFilters[key]; }); }
+  function passes(row){
+    for(const k in colFilters){ const o = optionOf(k); if(o && !o.test(row)) return false; }
+    return true;
+  }
+
+  // Plug into the report: rows shown, "is a filter on", and Export all use these.
+  const _match = rowMatchesView;
+  rowMatchesView = function(row){ return _match(row) && passes(row); };
+  const _any = anyFilterOn;
+  anyFilterOn = function(){ return _any() || Object.keys(colFilters).length > 0; };
+
+  // Header buttons
+  const ths = document.querySelectorAll('thead tr.cols th');
+  ths.forEach(function(th, i){
+    const key = HEAD_KEYS[i];
+    if(!key) return;
+    th.classList.add('cf-th');
+    th.insertAdjacentHTML('beforeend', '<button type="button" class="cf-btn" data-cf="' + key + '" title="Filter ' + label(key) + '" aria-label="Filter ' + label(key) + '"><svg viewBox="0 0 24 24"><path d="M4 6h16l-6 7v5l-4 2v-7z"/></svg></button>');
+  });
+
+  const menu = document.createElement('div');
+  menu.className = 'cf-menu';
+  menu.hidden = true;
+  document.body.appendChild(menu);
+  let menuKey = null;
+
+  function openMenu(btn, key){
+    menuKey = key;
+    const rows = currentRows().filter(function(r){ return !isOut(r); });
+    let h = '<div class="cf-head">' + label(key) + '<span>' + rows.length + ' active companies</span></div>';
+    h += '<button type="button" class="cf-opt' + (!colFilters[key] ? ' on' : '') + '" data-v=""><span>Show all</span></button>';
+    options(key).forEach(function(o, i){
+      const n = rows.filter(o.test).length;
+      if(i === 2 && DROPDOWN_COLS[key]) h += '<div class="cf-sep"></div>';
+      const tone = o.v === '__done' ? ' good' : (o.v === '__left' ? ' warn' : '');
+      h += '<button type="button" class="cf-opt' + tone + (colFilters[key] === o.v ? ' on' : '') + '" data-v="' + o.v + '"><span>' + o.l.replace(/</g,'&lt;') + '</span><b>' + n + '</b></button>';
+    });
+    menu.innerHTML = h;
+    menu.hidden = false;
+    const r = btn.getBoundingClientRect();
+    let top = r.bottom + 6;
+    if(top + menu.offsetHeight > innerHeight - 8) top = Math.max(8, innerHeight - menu.offsetHeight - 8);
+    const left = Math.min(Math.max(8, r.left + r.width/2 - menu.offsetWidth/2), innerWidth - menu.offsetWidth - 8);
+    menu.style.top = top + 'px';
+    menu.style.left = left + 'px';
+  }
+  function closeMenu(){ menu.hidden = true; menuKey = null; }
+
+  document.querySelector('thead').addEventListener('click', function(e){
+    const b = e.target.closest('.cf-btn');
+    if(!b) return;
+    e.stopPropagation();
+    if(menuKey === b.dataset.cf){ closeMenu(); return; }
+    openMenu(b, b.dataset.cf);
+  });
+  menu.addEventListener('click', function(e){
+    const o = e.target.closest('.cf-opt');
+    if(!o) return;
+    if(o.dataset.v) colFilters[menuKey] = o.dataset.v; else delete colFilters[menuKey];
+    closeMenu();
+    renderView();
+  });
+  document.addEventListener('mousedown', function(e){ if(!menu.hidden && !menu.contains(e.target) && !e.target.closest('.cf-btn')) closeMenu(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeMenu(); });
+  document.querySelector('.tablescroll').addEventListener('scroll', closeMenu);
+  window.addEventListener('resize', closeMenu);
+
+  // Header buttons light up, and each column filter shows as a chip next to Filters.
+  function paint(){
+    document.querySelectorAll('.cf-btn').forEach(function(b){ b.classList.toggle('on', !!colFilters[b.dataset.cf]); });
+    const box = $('activeFilters');
+    box.querySelectorAll('.fchip.cf').forEach(function(x){ x.remove(); });
+    Object.keys(colFilters).forEach(function(k){
+      const o = optionOf(k); if(!o) return;
+      box.insertAdjacentHTML('beforeend', '<button type="button" class="fchip cf" data-cfclear="' + k + '" title="Remove this filter">' + (label(k) + ': ' + o.l).replace(/</g,'&lt;') + ' ×</button>');
+    });
+    const badge = $('filterCount');
+    const n = box.querySelectorAll('.fchip').length;
+    badge.hidden = !n; badge.textContent = n;
+  }
+  $('activeFilters').addEventListener('click', function(e){
+    const b = e.target.closest('[data-cfclear]');
+    if(!b) return;
+    delete colFilters[b.dataset.cfclear];
+    renderView();
+  });
+  $('btnClearFilters').addEventListener('click', function(){
+    Object.keys(colFilters).forEach(function(k){ delete colFilters[k]; });
+    renderView();
+  });
+  // "Monthly control" in the sidebar clears column filters too.
+  $('sbNav').addEventListener('click', function(e){
+    const b = e.target.closest('.sb-item');
+    if(b && b.textContent.indexOf('Monthly control') === 0 && Object.keys(colFilters).length){
+      Object.keys(colFilters).forEach(function(k){ delete colFilters[k]; });
+      renderView();
+    }
+  }, true);
+
+  const _render = render;
+  render = function(){ _render.apply(this, arguments); paint(); };
+  paint();
+})();
+</script>
+</body>
 </html>
